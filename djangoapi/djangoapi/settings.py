@@ -79,9 +79,7 @@ INSTALLED_APPS = [
     'core',
     'codelist',
     'buildings',
-    'flowers',
-    'accidentes',
-    'buildings2'
+    'haikyuu'
 ]
 
 MIDDLEWARE = [

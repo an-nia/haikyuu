@@ -18,6 +18,7 @@ from django.contrib import admin
 from django.urls import path, include
 from django.contrib.auth.decorators import login_required
 
+
 from rest_framework import permissions
 
 #from drf_yasg.views import get_schema_view
@@ -35,10 +36,8 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     path("accounts/logout/", custom_logout_view, name="logout"),
     path("accounts/", include("django.contrib.auth.urls")),
-
     path('codelist/', include('codelist.urls')),
     path('core/', include('core.urls')),
     path('buildings/', include('buildings.urls')),
-    path('flowers/', include('flowers.urls')),
-    path('accidentes/', include('accidentes.urls')),
+    path('haikyuu/', include('haikyuu.urls')),
 ]
