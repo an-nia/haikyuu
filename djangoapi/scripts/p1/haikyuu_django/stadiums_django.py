@@ -4,7 +4,6 @@ from django.db import connection
 
 #Importar modelo
 from haikyuu.models import stadiums
-from scripts.p1.myLib import p1Settings2
 from djangoapi.settings import EPSG_FOR_GEOMETRIES, ST_SNAP_PRECISION
 
 class Stadiums:
