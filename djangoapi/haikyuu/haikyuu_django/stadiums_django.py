@@ -3,7 +3,7 @@ from django.forms.models import model_to_dict
 from django.db import connection
 
 #Importar modelo
-from haikyuu.models import schools, stadiums
+from haikyuu.models import  Stadiums as st
 from scripts.p1.myLib import p1Settings2
 from djangoapi.settings import EPSG_FOR_GEOMETRIES, ST_SNAP_PRECISION
 
@@ -31,7 +31,13 @@ class Stadiums:
         d['area'] = g.area
         d['perimeter'] = g.length
 
-        b = stadiums(**d)
+        # MODIFICACIÓN PARA FOREIGN KEYS
+        if 'city' in d:
+            d['city_id'] = d.pop('city')
+        if 'surface_type' in d:
+            d['surface_type_id'] = d.pop('surface_type')
+
+        b = st(**d)
         b.save()
         
         res = model_to_dict(b)
@@ -54,7 +60,7 @@ class Stadiums:
         if len(r) > 0:
             return {'ok': False, 'message': 'El estadio interseca con otro', 'data': r}
 
-        l = list(stadiums.objects.filter(id=d['id']))
+        l = list(st.objects.filter(id=d['id']))
         if not l:
             return {'ok': False, 'message': f"No existe estadio con id {d['id']}", 'data': []}
         
@@ -64,16 +70,17 @@ class Stadiums:
         b.perimeter = g.length
         b.description = d.get('description', b.description)
         b.name = d.get('name', b.name)
-        b.city = d.get('city', b.city)
         b.capacity = d.get('capacity', b.capacity)
-        b.surface_type = d.get('surface_type', b.surface_type)
+        # MODIFICACIÓN PARA FOREIGN KEYS
+        b.city_id = d.get('city', b.city_id)
+        b.surface_type_id = d.get('surface_type', b.surface_type_id)
         b.num_courts = d.get('num_courts', b.num_courts)
         b.save()
         
         return {'ok': True, 'message': 'Estadio actualizado', 'data': [{'rows_updated': 1}]}
 
     def delete(self, d: dict):
-        l = list(stadiums.objects.filter(id=d['id']))
+        l = list(st.objects.filter(id=d['id']))
         if not l:
             return {"ok": False, "message": f"No existe estadio con id {d['id']}", "data": []}
             
@@ -82,7 +89,7 @@ class Stadiums:
         return {'ok': True, 'message': 'Estadio borrado', 'data': [{'rows_deleted': 1}]}
 
     def selectAsDicts(self, d: dict):
-        l = list(stadiums.objects.filter(id=d['id']))
+        l = list(st.objects.filter(id=d['id']))
         if not l:
             return {'ok': False, 'message': 'No encontrado', 'data': []}
             
@@ -92,16 +99,18 @@ class Stadiums:
         return {'ok': True, 'message': 'Recuperado', 'data': [res]}
 
     def selectAsTuples(self, d: dict):
-        l = list(stadiums.objects.filter(id=d['id']))
+        l = list(st.objects.filter(id=d['id']))
         if not l:
             return {'ok': False, 'message': 'No encontrado', 'data': []}
-            
+        # Obtener los nombres sólo si el objeto existe, si no, devuelve un texto vacío ""
+        city_name = b.city.name if b.city else ""
+        surface_type_name = b.surface_type.name if b.surface_type else ""
         b = l[0]
-        tup = (b.id, b.description, b.name, b.city, b.capacity, b.surface_type, b.num_courts, b.area, b.perimeter, b.geom.wkt)
+        tup = (b.id, b.description, b.name, city_name, b.capacity, surface_type_name, b.num_courts, b.area, b.perimeter, b.geom.wkt)
         return {'ok': True, 'message': 'Recuperado como tupla', 'data': [tup]}
 
     def selectAll(self):
-        l = list(stadiums.objects.all())
+        l = list(st.objects.all())
         res = []
         for b in l:
             d = model_to_dict(b)

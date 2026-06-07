@@ -3,7 +3,7 @@ from django.forms.models import model_to_dict
 from django.db import connection
 
 #Importar modelo
-from haikyuu.models import nationals_travel
+from haikyuu.models import Nationals_travel as nt
 from djangoapi.settings import EPSG_FOR_GEOMETRIES, ST_SNAP_PRECISION
 
 class NationalsTravel:
@@ -28,7 +28,13 @@ class NationalsTravel:
         # Cálculo de la longitud de la línea
         d['longitud'] = g.length
 
-        b = nationals_travel(**d)
+        # MODIFICACIÓN PARA FOREIGN KEYS: Cambiar las claves del diccionario
+        if 'origin_prefecture' in d:
+            d['origin_prefecture_id'] = d.pop('origin_prefecture')
+        if 'vehicle_type' in d:
+            d['vehicle_type_id'] = d.pop('vehicle_type')
+
+        b = nt(**d)
         b.save()
         
         res = model_to_dict(b)
@@ -50,7 +56,7 @@ class NationalsTravel:
         if len(r) > 0:
             return {'ok': False, 'message': 'El viaje interseca con otra ruta', 'data': r}
 
-        l = list(nationals_travel.objects.filter(id=d['id']))
+        l = list(nt.objects.filter(id=d['id']))
         if not l:
             return {'ok': False, 'message': f"No existe viaje con id {d['id']}", 'data': []}
         
@@ -59,8 +65,9 @@ class NationalsTravel:
         b.longitud = g.length
         b.description = d.get('description', b.description)
         b.team_name = d.get('team_name', b.team_name)
-        b.origin_prefecture = d.get('origin_prefecture', b.origin_prefecture)
-        b.vehicle_type = d.get('vehicle_type', b.vehicle_type)
+        # MODIFICACIÓN PARA FOREIGN KEYS
+        b.origin_prefecture_id = d.get('origin_prefecture', b.origin_prefecture_id)
+        b.vehicle_type_id = d.get('vehicle_type', b.vehicle_type_id)
         b.stops_made = d.get('stops_made', b.stops_made)
         b.total_cost_yen = d.get('total_cost_yen', b.total_cost_yen)
         b.save()
@@ -68,7 +75,7 @@ class NationalsTravel:
         return {'ok': True, 'message': 'Viaje actualizado', 'data': [{'rows_updated': 1}]}
 
     def delete(self, d: dict):
-        l = list(nationals_travel.objects.filter(id=d['id']))
+        l = list(nt.objects.filter(id=d['id']))
         if not l:
             return {"ok": False, "message": f"No existe viaje con id {d['id']}", "data": []}
             
@@ -77,7 +84,7 @@ class NationalsTravel:
         return {'ok': True, 'message': 'Viaje borrado', 'data': [{'rows_deleted': 1}]}
 
     def selectAsDicts(self, d: dict):
-        l = list(nationals_travel.objects.filter(id=d['id']))
+        l = list(nt.objects.filter(id=d['id']))
         if not l:
             return {'ok': False, 'message': 'No encontrado', 'data': []}
             
@@ -87,16 +94,22 @@ class NationalsTravel:
         return {'ok': True, 'message': 'Recuperado', 'data': [res]}
 
     def selectAsTuples(self, d: dict):
-        l = list(nationals_travel.objects.filter(id=d['id']))
+        l = list(nt.objects.filter(id=d['id']))
         if not l:
             return {'ok': False, 'message': 'No encontrado', 'data': []}
             
         b = l[0]
-        tup = (b.id, b.description, b.team_name, b.origin_prefecture, b.vehicle_type, b.stops_made, b.total_cost_yen, b.longitud, b.geom.wkt)
+        
+        # Obtener los nombres sólo si el objeto existe, si no, devuelve un texto vacío ""
+        prefecture_name = b.origin_prefecture.name if b.origin_prefecture else ""
+        vehicle_name = b.vehicle_type.name if b.vehicle_type else ""
+        
+        tup = (b.id, b.description, b.team_name, prefecture_name, vehicle_name, b.stops_made, b.total_cost_yen, b.longitud, b.geom.wkt)
+        
         return {'ok': True, 'message': 'Recuperado como tupla', 'data': [tup]}
     
     def selectAll(self):
-        l = list(nationals_travel.objects.all())
+        l = list(nt.objects.all())
         res = []
         for b in l:
             d = model_to_dict(b)

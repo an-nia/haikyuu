@@ -1,8 +1,8 @@
 from django.urls import path, include
-from rest_framework import routers
+#from rest_framework import routers
 from . import views
 
-router = routers.DefaultRouter()
+#router = routers.DefaultRouter()
 
 urlpatterns = [
     path("hello_haikyuu/", views.HelloHaikyuu.as_view(), name="hello_haikyuu"),    

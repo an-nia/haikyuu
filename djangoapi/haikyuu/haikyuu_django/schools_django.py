@@ -3,7 +3,7 @@ from django.forms.models import model_to_dict
 from django.db import connection
 
 #Importar modelo
-from haikyuu.models import schools
+from haikyuu.models import Schools as sc
 from djangoapi.settings import EPSG_FOR_GEOMETRIES, ST_SNAP_PRECISION
 
 class Schools:
@@ -25,7 +25,14 @@ class Schools:
             return {'ok': False, 'message': 'La escuela debe estar dentro de un estadio (polígono)', 'data': []}
 
         d['geom'] = g
-        b = schools(**d)
+
+        # MODIFICACIÓN PARA FOREIGN KEYS
+        if 'prefecture' in d:
+            d['prefecture_id'] = d.pop('prefecture')
+        if 'school_type' in d:
+            d['school_type_id'] = d.pop('school_type')
+
+        b = sc(**d)
         b.save()
         
         res = model_to_dict(b)
@@ -47,7 +54,7 @@ class Schools:
         if len(r) == 0:
             return {'ok': False, 'message': 'La escuela debe estar dentro de un estadio (polígono)', 'data': []}
 
-        l = list(schools.objects.filter(id=d['id']))
+        l = list(sc.objects.filter(id=d['id']))
         if not l:
             return {'ok': False, 'message': f"No existe escuela con id {d['id']}", 'data': []}
         
@@ -59,12 +66,15 @@ class Schools:
         b.students = d.get('students', b.students)
         b.volleyball_club_name = d.get('volleyball_club_name', b.volleyball_club_name)
         b.captain = d.get('captain', b.captain)
+        # MODIFICACIÓN PARA FOREIGN KEYS
+        b.prefecture_id = d.get('prefecture', b.prefecture_id)
+        b.school_type_id = d.get('school_type', b.school_type_id)
         b.save()
         
         return {'ok': True, 'message': 'Escuela actualizada', 'data': [{'rows_updated': 1}]}
 
     def delete(self, d: dict):
-        l = list(schools.objects.filter(id=d['id']))
+        l = list(sc.objects.filter(id=d['id']))
         if not l:
             return {"ok": False, "message": f"No existe escuela con id {d['id']}", "data": []}
             
@@ -73,7 +83,7 @@ class Schools:
         return {'ok': True, 'message': 'Escuela borrada', 'data': [{'rows_deleted': 1}]}
 
     def selectAsDicts(self, d: dict):
-        l = list(schools.objects.filter(id=d['id']))
+        l = list(sc.objects.filter(id=d['id']))
         if not l:
             return {'ok': False, 'message': 'No encontrado', 'data': []}
             
@@ -83,16 +93,20 @@ class Schools:
         return {'ok': True, 'message': 'Recuperado', 'data': [res]}
 
     def selectAsTuples(self, d: dict):
-        l = list(schools.objects.filter(id=d['id']))
+        l = list(sc.objects.filter(id=d['id']))
         if not l:
             return {'ok': False, 'message': 'No encontrado', 'data': []}
-            
         b = l[0]
-        tup = (b.id, b.description, b.name, b.principal_name, b.students, b.volleyball_club_name, b.captain, b.geom.wkt)
+        
+        # Obtener los nombres sólo si el objeto existe, si no, devuelve un texto vacío ""
+        prefecture_name = b.origin_prefecture.name if b.origin_prefecture else ""
+        school_type_name = b.school_type.name if b.school_type else ""
+        
+        tup = (b.id, b.description, b.name, b.principal_name, b.students, b.volleyball_club_name, b.captain, prefecture_name, school_type_name, b.geom.wkt)
         return {'ok': True, 'message': 'Recuperado como tupla', 'data': [tup]}
 
     def selectAll(self):
-        l = list(schools.objects.all())
+        l = list(sc.objects.all())
         res = []
         for b in l:
             d = model_to_dict(b)

@@ -4,6 +4,10 @@ from django.views import View
 from core.myLib.baseDjangoView import BaseDjangoView
 import json
 
+# Imports para seguridad
+from django.contrib.auth.mixins import LoginRequiredMixin
+from core.myLib.manageUsers import getUserGroups
+
 #Importar archivos con los métodos
 from haikyuu.haikyuu_django.nationals_travel_django import NationalsTravel as NT
 from haikyuu.haikyuu_django.schools_django import Schools as SC
@@ -16,7 +20,7 @@ class HelloHaikyuu(View):
         return JsonResponse({"ok":True,"message": "Haikyuu. Miau", "data":[]},status=200)
 
 # Clase para la tabla de líneas: nationals_travel
-class NationalsTravel(BaseDjangoView):
+class NationalsTravel(LoginRequiredMixin, BaseDjangoView):
     #Constructor
     def __init__(self):
         self.n=NT()
@@ -33,8 +37,12 @@ class NationalsTravel(BaseDjangoView):
     #OPERACIONES POST
     #Llama a la función insert del archivo nationals_travel_django.py dentro de la carpeta haikyuu_django de la appi
     def insert(self, request):
-        body_data={}
+        # Seguridad: solo los usuarios con el grupo 'editor' pueden insertar.
+        grupos = getUserGroups(request.user)
+        if 'editor' not in grupos:
+            return JsonResponse({"ok": False, "message": "No tienes permisos de editor", "data": []})
 
+        body_data={}
         #CASO 1: form-data o x-www-form-urlencoded
         if request.POST:
             body_data = request.POST.dict()
@@ -46,6 +54,11 @@ class NationalsTravel(BaseDjangoView):
     
     #Llama a la función update del archivo nationals_travel_django.py dentro de la carpeta haikyuu_django de la appi
     def update(self, request, id):
+        # Seguridad: solo los usuarios con el grupo 'editor' pueden actualizar.
+        grupos = getUserGroups(request.user)
+        if 'editor' not in grupos:
+            return JsonResponse({"ok": False, "message": "No tienes permisos de editor", "data": []})
+        
         body_data={}
         if request.POST:
             body_data = request.POST.dict()
@@ -54,12 +67,16 @@ class NationalsTravel(BaseDjangoView):
         return JsonResponse(self.n.update(body_data))    
     
     #Llama a la función delete del archivo nationals_travel_django.py dentro de la carpeta haikyuu_django de la appi
-    def delete(self, id):
+    def delete(self, request, id):
+        # Seguridad: solo los usuarios con el grupo 'editor' pueden eliminar.
+        grupos = getUserGroups(request.user)
+        if 'editor' not in grupos:
+            return JsonResponse({"ok": False, "message": "No tienes permisos de editor", "data": []})
         return JsonResponse(self.n.delete({'id': id}))
 
     
 # Clase para la tabla de polígonos: schools
-class Schools(BaseDjangoView):
+class Schools(LoginRequiredMixin, BaseDjangoView):
     #Constructor
     def __init__(self):
         self.sc=SC()
@@ -76,8 +93,11 @@ class Schools(BaseDjangoView):
     #OPERACIONES POST
     #Llama a la función insert del archivo schools_django.py dentro de la carpeta haikyuu_django de la appi
     def insert(self, request):
-        body_data={}
+        grupos = getUserGroups(request.user)
+        if 'editor' not in grupos:
+            return JsonResponse({"ok": False, "message": "No tienes permisos de editor", "data": []})
 
+        body_data={}
         #CASO 1: form-data o x-www-form-urlencoded
         if request.POST:
             body_data = request.POST.dict()
@@ -89,6 +109,10 @@ class Schools(BaseDjangoView):
     
     #Llama a la función update del archivo schools_django.py dentro de la carpeta haikyuu_django de la appi
     def update(self, request, id):
+        grupos = getUserGroups(request.user)
+        if 'editor' not in grupos:
+            return JsonResponse({"ok": False, "message": "No tienes permisos de editor", "data": []})
+
         body_data={}
         if request.POST:
             body_data = request.POST.dict()
@@ -97,11 +121,14 @@ class Schools(BaseDjangoView):
         return JsonResponse(self.sc.update(body_data))    
     
     #Llama a la función delete del archivo schools_django.py dentro de la carpeta haikyuu_django de la appi
-    def delete(self, id):
+    def delete(self, request, id):
+        grupos = getUserGroups(request.user)
+        if 'editor' not in grupos:
+            return JsonResponse({"ok": False, "message": "No tienes permisos de editor", "data": []})
         return JsonResponse(self.sc.delete({'id': id}))
 
 
-class Stadiums(BaseDjangoView):
+class Stadiums(LoginRequiredMixin, BaseDjangoView):
     #Constructor
     def __init__(self):
         self.st=ST()
@@ -118,8 +145,11 @@ class Stadiums(BaseDjangoView):
     #OPERACIONES POST
     #Llama a la función insert del archivo stadiums_django.py dentro de la carpeta haikyuu_django de la appi
     def insert(self, request):
-        body_data={}
+        grupos = getUserGroups(request.user)
+        if 'editor' not in grupos:
+             return JsonResponse({"ok": False, "message": "No tienes permisos de editor", "data": []})
 
+        body_data={}
         #CASO 1: form-data o x-www-form-urlencoded
         if request.POST:
             body_data = request.POST.dict()
@@ -131,6 +161,10 @@ class Stadiums(BaseDjangoView):
     
     #Llama a la función update del archivo stadiums_django.py dentro de la carpeta haikyuu_django de la appi
     def update(self, request, id):
+        grupos = getUserGroups(request.user)
+        if 'editor' not in grupos:
+            return JsonResponse({"ok": False, "message": "No tienes permisos de editor", "data": []})
+
         body_data={}
         if request.POST:
             body_data = request.POST.dict()
@@ -139,5 +173,8 @@ class Stadiums(BaseDjangoView):
         return JsonResponse(self.st.update(body_data))    
     
     #Llama a la función delete del archivo stadiums_django.py dentro de la carpeta haikyuu_django de la appi
-    def delete(self, id):
+    def delete(self, request, id):
+        grupos = getUserGroups(request.user)
+        if 'editor' not in grupos:
+            return JsonResponse({"ok": False, "message": "No tienes permisos de editor", "data": []})
         return JsonResponse(self.st.delete({'id': id}))
